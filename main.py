@@ -103,29 +103,73 @@ def convert_im():
 	im.save("im2.png")
 
 
-def math_im():
+def count_im():
 	IM2 = Path("im2.png")
 	if not IM2.exists():
 		print("No file was found with the name \"im.png\"!")
 		exit()
 	im = Image.open(IM2)
 
-	block_count = [0] * 50
-	for x in range(im.size[0]):
-		for y in range(im.size[1]):
-			# r, g, b, a = im.getpixel((x, y))
-			#print(im.getpixel((x, y)))
-			pass
+	block_count = [0] * 52
+	for y in range(im.size[0]):
+		for x in range(im.size[1]):
+			px_clr = im.getpixel((x, y))
+			for clr in MAP_COLOURS:
+				if clr.get("rgba_mid") == px_clr:
+					block_count[clr.get("id")] += 1
+
+	block_count_tuple = []
+	for i in range(len(block_count)):
+		block_count_tuple.append((i, block_count[i]))
+	return block_count_tuple
+
+
+def math_im(block_count):
+	print("The total number of blocks needed: ", 128*128)
+	print()
+	block_count_sorted = block_count
+	block_count_sorted.sort(key=lambda tup: tup[1], reverse=True)
+	for i in block_count_sorted:
+		if i[1] == 0:
+			break
+		print(i[1], "blocks (", i[1]//64, "stacks +", i[1]%64, ") of", (next(item for item in MAP_COLOURS if item["id"] == i[0])).get("blocks"))
+
+	IM2 = Path("im2.png")
+	if not IM2.exists():
+		print("No file was found with the name \"im.png\"!")
+		exit()
+	im = Image.open(IM2)
+	print("\n\n")
+	row_block_order = []
+	for y in range(im.size[1]):
+		for x in range(im.size[0]):
+			px_clr = im.getpixel((x, y))
+			for clr in MAP_COLOURS:
+				if clr.get("rgba_mid") == px_clr:
+					row_block_order.append(clr.get("id"))
+		count = 0
+		row_list = []
+		for i in range(len(row_block_order) - 1):
+			if row_block_order[i] == row_block_order[i + 1]:
+				count += 1
+			else:
+				row_list.append((row_block_order[i], count))
+				count = 1
+		row_list.append((row_block_order[-1], count))
+		txt = "In row " + str(y+1) + ", the block order from west to east is: "
+		for j in row_list:
+			txt += str(j[1]) + " " + next(item for item in MAP_COLOURS if item["id"] == j[0]).get("blocks")[0] + " || "
+		print(txt+'\n')
+		row_block_order.clear()
 
 
 load_im()
 convert_im()
+blocks = count_im()
+math_im(blocks)
 
-# TODO: add math functions that will calculate how many resources are needed to build it.
-# first, loop through the image, adding one for each pixel seen with a certain id into an array 51 long
-# then just count, then get the cool totls
-# gotta divide by 64, mod 64 to get num of stacks
-# mining/aquiring stats?
+
+# TODO: mining/aquiring stats?
 # TODO: add ability to remove certain blocks/colours
 # TODO: GUI ?????????????
 
