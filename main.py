@@ -22,9 +22,11 @@ def load_im():
 
 	if im.size[0] > IM_SIZE or im.size[1] > IM_SIZE:
 		if im.size[0] > im.size[1]:
-			im = im.resize((IM_SIZE, int(im.size[1] * IM_SIZE / im.size[0])), Image.BILINEAR)
+			im = im.resize((IM_SIZE, int(im.size[1] * IM_SIZE / im.size[0])), Image.BICUBIC)
+		elif im.size[0] < im.size[1]:
+			im = im.resize((int(im.size[0] * IM_SIZE / im.size[1]), IM_SIZE), Image.BICUBIC)
 		else:
-			im = im.resize((int(im.size[0] * IM_SIZE / im.size[1]), IM_SIZE), Image.BILINEAR)
+			im = im.resize((IM_SIZE, IM_SIZE), Image.BILINEAR)
 	temp.paste(im, mask=im)
 	im = temp
 	im.save("im.png")
@@ -40,10 +42,10 @@ def get_closest_to_palette(colour):
 	x = 7000000  # random high number
 	col = (0, 0, 0, 0)
 	for clr in MAP_COLOURS:
-		temp = distance(clr.get("rgba"), colour)
+		temp = distance(clr.get("rgba_mid"), colour)
 		if temp <= x:
 			x = temp
-			col = clr.get("rgba")
+			col = clr.get("rgba_mid")
 	return col
 
 
@@ -53,18 +55,18 @@ def convert_im():
 		print("No file was found with the name \"im.png\"!")
 		exit()
 	im = Image.open(IM)
-	px = im.load()
+	# px = im.load()
 
-	pal = []
-	for clr in MAP_COLOURS:
-		pal.append(clr.get("rgba")[0])
-	#for clr in MAP_COLOURS:
-		pal.append(clr.get("rgba")[1])
-	#for clr in MAP_COLOURS:
-		pal.append(clr.get("rgba")[2])
-	print(pal)
-	pal = [int(i*220/255) for i in pal]
-	print(pal)
+	# pal = []
+	# for clr in MAP_COLOURS:
+	# 	pal.append(clr.get("rgba")[0])
+	# #for clr in MAP_COLOURS:
+	# 	pal.append(clr.get("rgba")[1])
+	# #for clr in MAP_COLOURS:
+	# 	pal.append(clr.get("rgba")[2])
+	# print(pal)
+	# pal = [int(i*220/255) for i in pal]
+	# print(pal)
 	# for clr in MAP_COLOURS:
 	# 	pal.append(clr.get("rgba")[3])
 
@@ -85,19 +87,40 @@ def convert_im():
 	# new_image.show()
 
 	# 220/255 is the scale factor for a flat image
+	# for x in range(im.size[0]):
+	# 	for y in range(im.size[1]):
+	# 		r, g, b, a = get_closest_to_palette(im.getpixel((x, y)))
+	# 		closest_clr = r, g, b, a
+	# 		px[x, y] = closest_clr
+
 	for x in range(im.size[0]):
 		for y in range(im.size[1]):
 			r, g, b, a = get_closest_to_palette(im.getpixel((x, y)))
-			closest_clr = (int(r*220/255), int(g*220/255), int(b*220/255), 255)
-			px[x, y] = closest_clr
+			closest_clr = r, g, b, a
+			im.putpixel((x, y), closest_clr)
 
 	im.show()
 	im.save("im2.png")
 
 
+def math_im():
+	IM2 = Path("im2.png")
+	if not IM2.exists():
+		print("No file was found with the name \"im.png\"!")
+		exit()
+	im = Image.open(IM2)
+
+	block_count = [0] * 50
+	for x in range(im.size[0]):
+		for y in range(im.size[1]):
+			# r, g, b, a = im.getpixel((x, y))
+			#print(im.getpixel((x, y)))
+			pass
+
+
 load_im()
 convert_im()
-# TODO: add to github
+
 # TODO: add math functions that will calculate how many resources are needed to build it.
 # first, loop through the image, adding one for each pixel seen with a certain id into an array 51 long
 # then just count, then get the cool totls
@@ -105,3 +128,11 @@ convert_im()
 # mining/aquiring stats?
 # TODO: add ability to remove certain blocks/colours
 # TODO: GUI ?????????????
+
+
+# def get_all_mapclr():
+# 	for clr in MAP_COLOURS:
+# 		r, g, b, a = clr.get("rgba")
+# 			print(clr.get("name"), ":\n\"rgba\": (", r, ',', g, ',', b, ',', 255, "), \n\"rgba_mid\": (",
+# 	  		int(r * 220 / 255), ',', int(g * 220 / 255), ',', int(b * 220 / 255), ',', 255, "), \n\"rgba_dark\": (",
+# 	 		 int(r * 180 / 255), ',', int(g * 180 / 255), ',', int(b * 180 / 255), ',', 255, '),\n')
